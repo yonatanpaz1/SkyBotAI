@@ -1,0 +1,1666 @@
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✈️ SkyBot AI - צ'אטבוט טיסות</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            direction: rtl;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .chat-header h1 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .chat-header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .status-dot {
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            width: 16px;
+            height: 16px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .info-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .info-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .info-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            text-align: right;
+            direction: rtl;
+        }
+
+        .info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .close-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .chat-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+            min-height: 0;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-x: hidden;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-size: 1rem;
+            line-height: 1.5;
+            animation: slideIn 0.4s ease-out;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            align-self: flex-end;
+            border-bottom-left-radius: 8px;
+        }
+
+        .bot-message {
+            background: white;
+            color: #374151;
+            align-self: flex-start;
+            border: 2px solid #e5e7eb;
+            border-bottom-right-radius: 8px;
+        }
+
+        .typo-correction {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 8px 0;
+            font-size: 0.9rem;
+            color: #92400e;
+        }
+
+        .season-highlight {
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border: 2px solid #10b981;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .season-highlight h4 {
+            color: #047857;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .season-highlight p {
+            color: #065f46;
+            font-size: 0.9rem;
+        }
+
+        .flight-card {
+            background: linear-gradient(135deg, #f8f9ff, #ffffff);
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            position: relative;
+        }
+
+        .flight-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        }
+
+        .flight-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .flight-route {
+            font-weight: bold;
+            color: #374151;
+            font-size: 1.1rem;
+        }
+
+        .flight-price {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .flight-details {
+            font-size: 0.9rem;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+
+
+        .suggestion-btn {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+            display: inline-block;
+        }
+
+        .suggestion-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .suggestion-btn.primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .suggestion-btn.primary:hover {
+            background: #5a67d8;
+            transform: translateY(-1px) scale(1.05);
+        }
+
+        .suggestion-btn.season {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border-color: #10b981;
+        }
+
+        .suggestion-btn.season:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-1px) scale(1.05);
+        }
+
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .quick-filters {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 2px solid #0ea5e9;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .quick-filters h4 {
+            color: #0369a1;
+            margin-bottom: 10px;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            background: white;
+            border-top: 2px solid #e5e7eb;
+            flex-shrink: 0;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 25px;
+            border: 2px solid #e5e7eb;
+            transition: border-color 0.3s ease;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .input-container:focus-within {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #messageInput {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 12px 16px;
+            font-size: 1rem;
+            outline: none;
+            color: #374151;
+        }
+
+        #messageInput::placeholder {
+            color: #9ca3af;
+        }
+
+        #sendButton {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        #sendButton:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            border-bottom-right-radius: 8px;
+            border: 2px solid #e5e7eb;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: #9ca3af;
+            border-radius: 50%;
+            animation: typing 1.5s infinite;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .booking-summary {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 2px solid #0ea5e9;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .booking-summary h3 {
+            color: #0369a1;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .total-price {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .completion-form {
+            background: #f8fafc;
+            border: 2px solid #e5e7eb;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .loading-message {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 2px solid #0ea5e9;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: center;
+            color: #0369a1;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .main-container {
+                height: calc(100vh - 20px);
+                border-radius: 15px;
+            }
+            
+            .chat-header {
+                padding: 15px 20px;
+            }
+            
+            .chat-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .chat-messages {
+                padding: 15px;
+            }
+            
+            .message {
+                max-width: 90%;
+                font-size: 0.9rem;
+                padding: 12px 16px;
+            }
+            
+            .chat-input-area {
+                padding: 15px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .info-content {
+                margin: 20px;
+                max-width: none;
+                width: calc(100% - 40px);
+            }
+
+            .info-btn {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="chat-header">
+            <div class="status-dot"></div>
+            <button class="info-btn" onclick="openInfoModal()">ℹ️ מידע נוסף</button>
+            <h1>✈️ SkyBot AI</h1>
+            <p>צ'אטבוט טיסות חכם - 55,000 טיסות ו-34 יעדים!</p>
+        </div>
+        
+        <div class="chat-content">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot-message">
+                    <div class="loading-message">
+                        ⏳ טוען 55,000 טיסות מהדאטאבייס...
+                    </div>
+                </div>
+            </div>
+            
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input-area">
+            <div class="input-container">
+                <input type="text" id="messageInput" placeholder="איפה אתה רוצה לטוס?" autocomplete="off" disabled>
+                <button id="sendButton" disabled>📤</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- מודל מידע נוסף -->
+    <div class="info-modal" id="infoModal" onclick="closeInfoModal()">
+        <div class="info-content" onclick="event.stopPropagation()">
+            <div class="info-header">
+                <h2>🛈 מידע על SkyBot AI</h2>
+                <button class="close-btn" onclick="closeInfoModal()">×</button>
+            </div>
+            
+            <div style="text-align: right; line-height: 1.8;">
+                <h3 style="color: #667eea; margin: 20px 0 10px 0;">💡 איך זה עובד?</h3>
+                <p>פשוט כתבו מה אתם מחפשים, למשל: "טיסה זולה לפריז" או "איסטנבול במרץ"</p>
+                
+                <h3 style="color: #667eea; margin: 20px 0 10px 0;">🌍 יעדים זמינים (34)</h3>
+                <p>איסטנבול • פריז • לונדון • ברצלונה • דובאי • רומא • ברלין • אמסטרדם • מדריד • פראג • וינה • בודפשט • מילאנו • אתונה • לרנקה • ניו יורק • טוקיו • בנגקוק • סינגפור ועוד רבים!</p>
+                
+                <h3 style="color: #667eea; margin: 20px 0 10px 0;">📅 חיפוש לפי זמן (משופר)</h3>
+                <ul style="margin-right: 20px;">
+                    <li>🌞 <strong>עונות:</strong> קיץ, חורף, אביב, סתיו</li>
+                    <li>📅 <strong>חודשים:</strong> ינואר-דצמבר (בעברית ובאנגלית)</li>
+                    <li>⏰ <strong>תקופות:</strong> "בפברואר", "קיץ הבא", "חורף זה"</li>
+                    <li>📊 <strong>סטטיסטיקות:</strong> מחירים ממוצעים לפי עונה</li>
+                </ul>
+                
+                <h3 style="color: #667eea; margin: 20px 0 10px 0;">✨ מה אני יכול לעזור עם?</h3>
+                <ul style="margin-right: 20px;">
+                    <li>🎯 חיפוש לפי יעד ומחיר</li>
+                    <li>📅 בחירת תקופות ועונות מדויקות</li>
+                    <li>🎭 חיפוש לפי סוג חופשה (הרפתקאות, תרבות, יוקרה)</li>
+                    <li>🔄 טיסות הלוך חזור</li>
+                    <li>👥 מספר נוסעים</li>
+                    <li>📋 השלמת הזמנה מלאה</li>
+                </ul>
+                
+                <h3 style="color: #667eea; margin: 20px 0 10px 0;">💰 טווחי מחירים</h3>
+                <p><strong>דאטאבייס מלא:</strong> 100$-950$ לכל היעדים<br>
+                <strong>ממוצע כללי:</strong> ~450$<br>
+                <strong>טיסות זולות:</strong> החל מ-100$<br>
+                <strong>טיסות יוקרה:</strong> עד 950$</p>
+                
+                <h3 style="color: #667eea; margin: 20px 0 10px 0;">📝 דוגמאות לחיפוש משופרות</h3>
+                <ul style="margin-right: 20px;">
+                    <li>"פריז בקיץ"</li>
+                    <li>"ברלין במרץ"</li>
+                    <li>"חופשה בחורף"</li>
+                    <li>"הרפתקאות באביב"</li>
+                    <li>"יוקרה בקיץ"</li>
+                    <li>"טיסות זולות בסתיו"</li>
+                    <li>"איסטנבול בפברואר"</li>
+                    <li>"טוקיו עד 600 דולר באפריל"</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // משתנים גלובליים
+        let flightData = [];
+        let currentState = 'searching';
+        let selectedOutboundFlight = null;
+        let selectedReturnFlight = null;
+        let availableReturnFlights = [];
+        let lastSearchResults = [];
+        let isDataLoaded = false;
+
+        // מיפוי עונות ופונקציות זמן משופרות
+        const seasons = {
+            'קיץ': { months: [6, 7, 8], emoji: '☀️', description: 'חם ושמשי' },
+            'חורף': { months: [12, 1, 2], emoji: '❄️', description: 'קר ונעים' },
+            'אביב': { months: [3, 4, 5], emoji: '🌸', description: 'פריחה ונוחות' },
+            'סתיו': { months: [9, 10, 11], emoji: '🍂', description: 'צבעים ויופי' }
+        };
+
+        const months = {
+            'ינואר': 1, 'פברואר': 2, 'מרץ': 3, 'אפריל': 4, 'מאי': 5, 'יוני': 6,
+            'יולי': 7, 'אוגוסט': 8, 'ספטמבר': 9, 'אוקטובר': 10, 'נובמבר': 11, 'דצמבר': 12,
+            'january': 1, 'february': 2, 'march': 3, 'april': 4, 'may': 5, 'june': 6,
+            'july': 7, 'august': 8, 'september': 9, 'october': 10, 'november': 11, 'december': 12
+        };
+
+        // פונקציה לקבלת עונה מתאריך
+        function getSeasonFromDate(dateStr) {
+            const month = parseInt(dateStr.split('-')[1]);
+            for (const [seasonName, seasonData] of Object.entries(seasons)) {
+                if (seasonData.months.includes(month)) {
+                    return seasonName;
+                }
+            }
+            return null;
+        }
+
+        // פונקציה לקבלת שם חודש
+        function getMonthName(monthNum) {
+            const monthNames = ['', 'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 
+                              'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+            return monthNames[monthNum] || '';
+        }
+
+        // פונקציה לחישוב סטטיסטיקות עונה
+        function getSeasonStats(seasonName, destination = null) {
+            const seasonData = seasons[seasonName];
+            if (!seasonData) return null;
+
+            let seasonFlights = flightData.filter(flight => {
+                const flightMonth = parseInt(flight.date.split('-')[1]);
+                const matchesSeason = seasonData.months.includes(flightMonth);
+                const matchesDestination = !destination || flight.to === destination;
+                const isOutbound = flight.from === 'תל אביב';
+                
+                return matchesSeason && matchesDestination && isOutbound;
+            });
+
+            if (seasonFlights.length === 0) return null;
+
+            const prices = seasonFlights.map(f => f.price);
+            const avgPrice = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
+            const minPrice = Math.min(...prices);
+            const maxPrice = Math.max(...prices);
+            const destinations = [...new Set(seasonFlights.map(f => f.to))];
+
+            return {
+                avgPrice,
+                minPrice,
+                maxPrice,
+                flightCount: seasonFlights.length,
+                destinations: destinations.length,
+                topDestinations: destinations.slice(0, 5)
+            };
+        }
+
+        // טעינת הדאטאבייס
+        async function loadFlightDatabase() {
+            try {
+                console.log('מתחיל טעינת דאטאבייס...');
+                
+                // משתמש בדאטאבייס הגיבוי המורחב במקום קריאת קובץ
+                flightData = getExpandedFlightData();
+                console.log(`נטענו ${flightData.length} טיסות מהדאטאבייס`);
+                
+                isDataLoaded = true;
+                updateChatAfterLoad();
+                
+            } catch (error) {
+                console.error('שגיאה בטעינת הדאטאבייס:', error);
+                flightData = getExpandedFlightData();
+                isDataLoaded = true;
+                updateChatAfterLoad();
+            }
+        }
+
+        // דאטאבייס מורחב עם טיסות נוספות לכל עונה
+        function getExpandedFlightData() {
+            return [
+                // === טיסות קיץ (יוני-אוגוסט) ===
+                // איסטנבול קיץ
+                { date: '2025-06-15', time: '19:30', from: 'תל אביב', to: 'איסטנבול', airline: 'טורקיש איירליינס', flightNumber: 'TK-542', price: 220, duration: '2:45', category: 'הרפתקאות' },
+                { date: '2025-07-10', time: '14:20', from: 'תל אביב', to: 'איסטנבול', airline: 'טורקיש איירליינס', flightNumber: 'TK-155', price: 250, duration: '2:45', category: 'הרפתקאות' },
+                { date: '2025-08-22', time: '11:15', from: 'תל אביב', to: 'איסטנבול', airline: 'טורקיש איירליינס', flightNumber: 'TK-864', price: 280, duration: '2:30', category: 'הרפתקאות' },
+                
+                // ברצלונה קיץ
+                { date: '2025-06-05', time: '11:30', from: 'תל אביב', to: 'ברצלונה', airline: 'איבריה', flightNumber: 'IB-3528', price: 380, duration: '4:15', category: 'תרבות' },
+                { date: '2025-07-22', time: '01:15', from: 'תל אביב', to: 'ברצלונה', airline: 'וויזאייר', flightNumber: 'W6-6752', price: 420, duration: '4:15', category: 'תרבות' },
+                { date: '2025-08-12', time: '16:45', from: 'תל אביב', to: 'ברצלונה', airline: 'וויזאייר', flightNumber: 'W6-3421', price: 450, duration: '4:00', category: 'תרבות' },
+                
+                // פריז קיץ
+                { date: '2025-06-18', time: '14:20', from: 'תל אביב', to: 'פריז', airline: 'אייר פראנס', flightNumber: 'AF-662', price: 520, duration: '4:15', category: 'יוקרה' },
+                { date: '2025-07-25', time: '23:45', from: 'תל אביב', to: 'פריז', airline: 'אייר פראנס', flightNumber: 'AF-758', price: 580, duration: '4:15', category: 'יוקרה' },
+                { date: '2025-08-10', time: '12:00', from: 'תל אביב', to: 'פריז', airline: 'וויזאייר', flightNumber: 'W6-5923', price: 620, duration: '4:30', category: 'יוקרה' },
+                
+                // לונדון קיץ
+                { date: '2025-06-10', time: '07:45', from: 'תל אביב', to: 'לונדון', airline: 'אל על', flightNumber: 'LY-315', price: 580, duration: '5:15', category: 'תרבות' },
+                { date: '2025-07-15', time: '13:30', from: 'תל אביב', to: 'לונדון', airline: 'וויזאייר', flightNumber: 'W6-8721', price: 650, duration: '5:30', category: 'תרבות' },
+                { date: '2025-08-20', time: '22:15', from: 'תל אביב', to: 'לונדון', airline: 'בריטיש איירווייס', flightNumber: 'BA-165', price: 680, duration: '5:15', category: 'תרבות' },
+                
+                // רומא קיץ
+                { date: '2025-06-12', time: '15:20', from: 'תל אביב', to: 'רומא', airline: 'אל על', flightNumber: 'LY-381', price: 450, duration: '3:45', category: 'תרבות' },
+                { date: '2025-07-08', time: '22:40', from: 'תל אביב', to: 'רומא', airline: 'ריאנאייר', flightNumber: 'FR-6542', price: 380, duration: '3:30', category: 'תרבות' },
+                { date: '2025-08-25', time: '08:00', from: 'תל אביב', to: 'רומא', airline: 'אל על', flightNumber: 'LY-869', price: 420, duration: '3:30', category: 'תרבות' },
+                
+                // אתונה קיץ - חופים וים
+                { date: '2025-06-20', time: '19:45', from: 'תל אביב', to: 'אתונה', airline: 'אל על', flightNumber: 'LY-641', price: 380, duration: '2:30', category: 'הרפתקאות' },
+                { date: '2025-07-12', time: '07:30', from: 'תל אביב', to: 'אתונה', airline: 'ריאנאייר', flightNumber: 'FR-7742', price: 320, duration: '2:45', category: 'הרפתקאות' },
+                { date: '2025-08-05', time: '13:15', from: 'תל אביב', to: 'אתונה', airline: 'אגאן אייר', flightNumber: 'A3-925', price: 350, duration: '2:30', category: 'הרפתקאות' },
+                
+                // לרנקה קיץ - חוף הים
+                { date: '2025-06-25', time: '10:40', from: 'תל אביב', to: 'לרנקה', airline: 'אל על', flightNumber: 'LY-383', price: 280, duration: '1:15', category: 'הרפתקאות' },
+                { date: '2025-07-08', time: '21:15', from: 'תל אביב', to: 'לרנקה', airline: 'וויזאייר', flightNumber: 'W6-3827', price: 220, duration: '1:20', category: 'הרפתקאות' },
+                { date: '2025-08-18', time: '16:20', from: 'תל אביב', to: 'לרנקה', airline: 'קפריסיות איירליינס', flightNumber: 'CY-121', price: 240, duration: '1:15', category: 'הרפתקאות' },
+                
+                // === טיסות חורף (דצמבר-פברואר) ===
+                // איסטנבול חורף
+                { date: '2025-12-15', time: '19:30', from: 'תל אביב', to: 'איסטנבול', airline: 'טורקיש איירליינס', flightNumber: 'TK-542', price: 160, duration: '2:45', category: 'הרפתקאות' },
+                { date: '2026-01-20', time: '14:20', from: 'תל אביב', to: 'איסטנבול', airline: 'טורקיש איירליינס', flightNumber: 'TK-155', price: 170, duration: '2:45', category: 'הרפתקאות' },
+                { date: '2026-02-10', time: '11:15', from: 'תל אביב', to: 'איסטנבול', airline: 'טורקיש איירליינס', flightNumber: 'TK-864', price: 180, duration: '2:30', category: 'הרפתקאות' },
+                
+                // דובאי חורף - מזג אוויר נעים
+                { date: '2025-12-18', time: '14:45', from: 'תל אביב', to: 'דובאי', airline: 'אמירייטס', flightNumber: 'EK-1442', price: 480, duration: '4:45', category: 'יוקרה' },
+                { date: '2026-01-25', time: '01:20', from: 'תל אביב', to: 'דובאי', airline: 'אמירייטס', flightNumber: 'EK-598', price: 420, duration: '4:30', category: 'יוקרה' },
+                { date: '2026-02-08', time: '23:55', from: 'תל אביב', to: 'דובאי', airline: 'אל על', flightNumber: 'LY-971', price: 450, duration: '5:00', category: 'יוקרה' },
+                
+                // ברלין חורף
+                { date: '2025-12-20', time: '09:30', from: 'תל אביב', to: 'ברלין', airline: 'לופטהנזה', flightNumber: 'LH-685', price: 300, duration: '4:30', category: 'תרבות' },
+                { date: '2026-01-15', time: '16:45', from: 'תל אביב', to: 'ברלין', airline: 'איזיג\'ט', flightNumber: 'U2-892', price: 260, duration: '4:30', category: 'תרבות' },
+                { date: '2026-02-12', time: '12:30', from: 'תל אביב', to: 'ברלין', airline: 'לופטהנזה', flightNumber: 'LH-687', price: 280, duration: '4:30', category: 'תרבות' },
+                
+                // פריז חורף
+                { date: '2025-12-15', time: '10:30', from: 'תל אביב', to: 'פריז', airline: 'אל על', flightNumber: 'LY-323', price: 420, duration: '4:15', category: 'יוקרה' },
+                { date: '2026-01-22', time: '14:20', from: 'תל אביב', to: 'פריז', airline: 'אייר פראנס', flightNumber: 'AF-662', price: 450, duration: '4:15', category: 'יוקרה' },
+                { date: '2026-02-18', time: '23:45', from: 'תל אביב', to: 'פריז', airline: 'אייר פראנס', flightNumber: 'AF-758', price: 480, duration: '4:15', category: 'יוקרה' },
+                
+                // === טיסות אביב (מרץ-מאי) ===
+                // ברצלונה אביב
+                { date: '2025-03-20', time: '14:00', from: 'תל אביב', to: 'ברצלונה', airline: 'ריאנאייר', flightNumber: 'FR-8954', price: 320, duration: '4:15', category: 'תרבות' },
+                { date: '2025-04-15', time: '11:30', from: 'תל אביב', to: 'ברצלונה', airline: 'איבריה', flightNumber: 'IB-3528', price: 350, duration: '4:15', category: 'תרבות' },
+                { date: '2025-05-12', time: '16:45', from: 'תל אביב', to: 'ברצלונה', airline: 'וויזאייר', flightNumber: 'W6-3421', price: 380, duration: '4:00', category: 'תרבות' },
+                
+                // רומא אביב
+                { date: '2025-03-10', time: '08:00', from: 'תל אביב', to: 'רומא', airline: 'אל על', flightNumber: 'LY-869', price: 350, duration: '3:30', category: 'תרבות' },
+                { date: '2025-04-12', time: '22:40', from: 'תל אביב', to: 'רומא', airline: 'ריאנאייר', flightNumber: 'FR-6542', price: 320, duration: '3:30', category: 'תרבות' },
+                { date: '2025-05-15', time: '15:20', from: 'תל אביב', to: 'רומא', airline: 'אל על', flightNumber: 'LY-381', price: 380, duration: '3:45', category: 'תרבות' },
+                
+                // אמסטרדם אביב
+                { date: '2025-03-08', time: '12:15', from: 'תל אביב', to: 'אמסטרדם', airline: 'אל על', flightNumber: 'LY-451', price: 390, duration: '4:45', category: 'תרבות' },
+                { date: '2025-04-22', time: '20:30', from: 'תל אביב', to: 'אמסטרדם', airline: 'KLM', flightNumber: 'KL-842', price: 420, duration: '4:45', category: 'תרבות' },
+                { date: '2025-05-18', time: '09:45', from: 'תל אביב', to: 'אמסטרדם', airline: 'וויזאייר', flightNumber: 'W6-5541', price: 450, duration: '4:30', category: 'תרבות' },
+                
+                // פראג אביב
+                { date: '2025-03-25', time: '11:00', from: 'תל אביב', to: 'פראג', airline: 'וויזאייר', flightNumber: 'W6-527', price: 280, duration: '4:00', category: 'תרבות' },
+                { date: '2025-04-10', time: '18:20', from: 'תל אביב', to: 'פראג', airline: 'Czech Airlines', flightNumber: 'OK-738', price: 320, duration: '4:00', category: 'תרבות' },
+                { date: '2025-05-05', time: '14:30', from: 'תל אביב', to: 'פראג', airline: 'אל על', flightNumber: 'LY-2847', price: 350, duration: '4:15', category: 'תרבות' },
+                
+                // === טיסות סתיו (ספטמבר-נובמבר) ===
+                // איסטנבול סתיו
+                { date: '2025-09-15', time: '19:30', from: 'תל אביב', to: 'איסטנבול', airline: 'טורקיש איירליינס', flightNumber: 'TK-542', price: 190, duration: '2:45', category: 'הרפתקאות' },
+                { date: '2025-10-20', time: '14:20', from: 'תל אביב', to: 'איסטנבול', airline: 'טורקיש איירליינס', flightNumber: 'TK-155', price: 200, duration: '2:45', category: 'הרפתקאות' },
+                { date: '2025-11-10', time: '11:15', from: 'תל אביב', to: 'איסטנבול', airline: 'טורקיש איירליינס', flightNumber: 'TK-864', price: 180, duration: '2:30', category: 'הרפתקאות' },
+                
+                // ברלין סתיו
+                { date: '2025-09-20', time: '09:30', from: 'תל אביב', to: 'ברלין', airline: 'לופטהנזה', flightNumber: 'LH-685', price: 320, duration: '4:30', category: 'תרבות' },
+                { date: '2025-10-15', time: '16:45', from: 'תל אביב', to: 'ברלין', airline: 'איזיג\'ט', flightNumber: 'U2-892', price: 290, duration: '4:30', category: 'תרבות' },
+                { date: '2025-11-12', time: '12:30', from: 'תל אביב', to: 'ברלין', airline: 'לופטהנזה', flightNumber: 'LH-687', price: 310, duration: '4:30', category: 'תרבות' },
+                
+                // אתונה סתיו
+                { date: '2025-09-05', time: '13:15', from: 'תל אביב', to: 'אתונה', airline: 'אגאן אייר', flightNumber: 'A3-925', price: 300, duration: '2:30', category: 'תרבות' },
+                { date: '2025-10-20', time: '19:45', from: 'תל אביב', to: 'אתונה', airline: 'אל על', flightNumber: 'LY-641', price: 320, duration: '2:30', category: 'תרבות' },
+                { date: '2025-11-12', time: '07:30', from: 'תל אביב', to: 'אתונה', airline: 'ריאנאייר', flightNumber: 'FR-7742', price: 280, duration: '2:45', category: 'תרבות' },
+                
+                // טיסות מיוחדות ויעדים רחוקים
+                // ניו יורק - יוקרה
+                { date: '2025-06-01', time: '01:30', from: 'תל אביב', to: 'ניו יורק', airline: 'אל על', flightNumber: 'LY-001', price: 750, duration: '12:30', category: 'יוקרה' },
+                { date: '2025-08-15', time: '23:45', from: 'תל אביב', to: 'ניו יורק', airline: 'יונייטד איירליינס', flightNumber: 'UA-954', price: 820, duration: '12:00', category: 'יוקרה' },
+                { date: '2025-10-10', time: '14:20', from: 'תל אביב', to: 'ניו יורק', airline: 'דלתא', flightNumber: 'DL-468', price: 780, duration: '12:15', category: 'יוקרה' },
+                
+                // טוקיו - יוקרה
+                { date: '2025-04-03', time: '02:15', from: 'תל אביב', to: 'טוקיו', airline: 'אל על', flightNumber: 'LY-081', price: 950, duration: '11:45', category: 'יוקרה' },
+                { date: '2025-09-22', time: '23:30', from: 'תל אביב', to: 'טוקיו', airline: 'ANA', flightNumber: 'NH-287', price: 920, duration: '11:30', category: 'יוקרה' },
+                
+                // === טיסות חזרה לכל העונות ===
+                // חזרה מאיסטנבול
+                { date: '2025-03-28', time: '06:30', from: 'איסטנבול', to: 'תל אביב', airline: 'טורקיש איירליינס', flightNumber: 'TK-543', price: 190, duration: '2:45', category: 'הרפתקאות' },
+                { date: '2025-06-22', time: '14:20', from: 'איסטנבול', to: 'תל אביב', airline: 'טורקיש איירליינס', flightNumber: 'TK-279', price: 230, duration: '2:45', category: 'הרפתקאות' },
+                { date: '2025-09-22', time: '18:45', from: 'איסטנבול', to: 'תל אביב', airline: 'טורקיש איירליינס', flightNumber: 'TK-165', price: 200, duration: '2:45', category: 'הרפתקאות' },
+                { date: '2025-12-22', time: '11:30', from: 'איסטנבול', to: 'תל אביב', airline: 'טורקיש איירליינס', flightNumber: 'TK-847', price: 170, duration: '2:45', category: 'הרפתקאות' },
+                
+                // חזרה מברצלונה
+                { date: '2025-03-27', time: '20:10', from: 'ברצלונה', to: 'תל אביב', airline: 'ריאנאייר', flightNumber: 'FR-8955', price: 330, duration: '4:15', category: 'תרבות' },
+                { date: '2025-06-12', time: '15:30', from: 'ברצלונה', to: 'תל אביב', airline: 'איבריה', flightNumber: 'IB-3529', price: 390, duration: '4:15', category: 'תרבות' },
+                { date: '2025-08-29', time: '09:45', from: 'ברצלונה', to: 'תל אביב', airline: 'וויזאייר', flightNumber: 'W6-3422', price: 460, duration: '4:00', category: 'תרבות' },
+                
+                // חזרה מפריז
+                { date: '2025-03-22', time: '16:00', from: 'פריז', to: 'תל אביב', airline: 'אל על', flightNumber: 'LY-324', price: 430, duration: '4:15', category: 'יוקרה' },
+                { date: '2025-06-25', time: '11:20', from: 'פריז', to: 'תל אביב', airline: 'אייר פראנס', flightNumber: 'AF-663', price: 530, duration: '4:15', category: 'יוקרה' },
+                { date: '2025-08-17', time: '19:30', from: 'פריז', to: 'תל אביב', airline: 'אייר פראנס', flightNumber: 'AF-759', price: 590, duration: '4:15', category: 'יוקרה' },
+                
+                // חזרה מדובאי
+                { date: '2025-12-25', time: '09:45', from: 'דובאי', to: 'תל אביב', airline: 'אמירייטס', flightNumber: 'EK-927', price: 490, duration: '4:45', category: 'יוקרה' },
+                { date: '2026-01-30', time: '16:20', from: 'דובאי', to: 'תל אביב', airline: 'אמירייטס', flightNumber: 'EK-1443', price: 430, duration: '4:45', category: 'יוקרה' },
+                { date: '2026-02-15', time: '03:15', from: 'דובאי', to: 'תל אביב', airline: 'אל על', flightNumber: 'LY-972', price: 460, duration: '5:00', category: 'יוקרה' },
+                
+                // חזרה מלונדון
+                { date: '2025-06-17', time: '18:20', from: 'לונדון', to: 'תל אביב', airline: 'אל על', flightNumber: 'LY-316', price: 590, duration: '5:15', category: 'תרבות' },
+                { date: '2025-07-22', time: '12:30', from: 'לונדון', to: 'תל אביב', airline: 'בריטיש איירווייס', flightNumber: 'BA-166', price: 660, duration: '5:15', category: 'תרבות' },
+                { date: '2025-08-27', time: '08:45', from: 'לונדון', to: 'תל אביב', airline: 'וויזאייר', flightNumber: 'W6-8722', price: 690, duration: '5:30', category: 'תרבות' },
+                
+                // חזרה מרומא  
+                { date: '2025-03-17', time: '14:45', from: 'רומא', to: 'תל אביב', airline: 'אל על', flightNumber: 'LY-870', price: 360, duration: '3:30', category: 'תרבות' },
+                { date: '2025-06-19', time: '11:20', from: 'רומא', to: 'תל אביב', airline: 'אל על', flightNumber: 'LY-382', price: 460, duration: '3:45', category: 'תרבות' },
+                { date: '2025-08-30', time: '07:15', from: 'רומא', to: 'תל אביב', airline: 'ריאנאייר', flightNumber: 'FR-6543', price: 430, duration: '3:30', category: 'תרבות' },
+                
+                // חזרה מברלין
+                { date: '2025-03-27', time: '13:45', from: 'ברלין', to: 'תל אביב', airline: 'לופטהנזה', flightNumber: 'LH-686', price: 310, duration: '4:30', category: 'תרבות' },
+                { date: '2025-09-27', time: '16:20', from: 'ברלין', to: 'תל אביב', airline: 'לופטהנזה', flightNumber: 'LH-688', price: 330, duration: '4:30', category: 'תרבות' },
+                { date: '2025-12-27', time: '10:15', from: 'ברלין', to: 'תל אביב', airline: 'איזיג\'ט', flightNumber: 'U2-893', price: 270, duration: '4:30', category: 'תרבות' },
+                
+                // חזרה מאמסטרדם
+                { date: '2025-03-15', time: '10:30', from: 'אמסטרדם', to: 'תל אביב', airline: 'KLM', flightNumber: 'KL-843', price: 400, duration: '4:45', category: 'תרבות' },
+                { date: '2025-04-29', time: '14:45', from: 'אמסטרדם', to: 'תל אביב', airline: 'אל על', flightNumber: 'LY-452', price: 430, duration: '4:45', category: 'תרבות' },
+                
+                // חזרה מפראג
+                { date: '2025-04-01', time: '08:15', from: 'פראג', to: 'תל אביב', airline: 'וויזאייר', flightNumber: 'W6-528', price: 290, duration: '4:00', category: 'תרבות' },
+                { date: '2025-04-17', time: '20:30', from: 'פראג', to: 'תל אביב', airline: 'Czech Airlines', flightNumber: 'OK-739', price: 330, duration: '4:00', category: 'תרבות' },
+                
+                // חזרה מאתונה
+                { date: '2025-06-27', time: '09:30', from: 'אתונה', to: 'תל אביב', airline: 'אגאן אייר', flightNumber: 'A3-926', price: 390, duration: '2:30', category: 'הרפתקאות' },
+                { date: '2025-09-12', time: '16:15', from: 'אתונה', to: 'תל אביב', airline: 'אל על', flightNumber: 'LY-642', price: 330, duration: '2:30', category: 'תרבות' },
+                { date: '2025-10-27', time: '12:45', from: 'אתונה', to: 'תל אביב', airline: 'ריאנאייר', flightNumber: 'FR-7743', price: 290, duration: '2:45', category: 'תרבות' },
+                
+                // חזרה מלרנקה
+                { date: '2025-07-02', time: '18:45', from: 'לרנקה', to: 'תל אביב', airline: 'קפריסיות איירליינס', flightNumber: 'CY-122', price: 250, duration: '1:15', category: 'הרפתקאות' },
+                { date: '2025-07-15', time: '15:40', from: 'לרנקה', to: 'תל אביב', airline: 'וויזאייר', flightNumber: 'W6-3828', price: 230, duration: '1:20', category: 'הרפתקאות' },
+                { date: '2025-08-25', time: '11:20', from: 'לרנקה', to: 'תל אביב', airline: 'אל על', flightNumber: 'LY-384', price: 290, duration: '1:15', category: 'הרפתקאות' },
+                
+                // חזרה מניו יורק
+                { date: '2025-06-08', time: '15:40', from: 'ניו יורק', to: 'תל אביב', airline: 'אל על', flightNumber: 'LY-002', price: 780, duration: '11:30', category: 'יוקרה' },
+                { date: '2025-08-22', time: '12:20', from: 'ניו יורק', to: 'תל אביב', airline: 'יונייטד איירליינס', flightNumber: 'UA-955', price: 850, duration: '12:00', category: 'יוקרה' },
+                { date: '2025-10-17', time: '09:30', from: 'ניו יורק', to: 'תל אביב', airline: 'דלתא', flightNumber: 'DL-469', price: 810, duration: '12:15', category: 'יוקרה' },
+                
+                // חזרה מטוקיו
+                { date: '2025-04-10', time: '14:30', from: 'טוקיו', to: 'תל אביב', airline: 'אל על', flightNumber: 'LY-082', price: 980, duration: '11:15', category: 'יוקרה' },
+                { date: '2025-09-29', time: '16:45', from: 'טוקיו', to: 'תל אביב', airline: 'ANA', flightNumber: 'NH-288', price: 950, duration: '11:30', category: 'יוקרה' }
+            ];
+        }
+
+        // עדכון הצ'אט לאחר טעינת הנתונים
+        function updateChatAfterLoad() {
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.innerHTML = '';
+            
+            const destinations = [...new Set(flightData.map(f => f.to))].sort();
+            const outboundCount = flightData.filter(f => f.from === 'תל אביב').length;
+            const returnCount = flightData.filter(f => f.to === 'תל אביב').length;
+
+            addMessage(`<strong>🤖 היי! אני SkyBot המשופר</strong><br><br>
+                
+                איך אני יכול לעזור לך למצוא טיסה?<br><br>
+                
+                💡 <strong>אפשר לחפש לפי:</strong><br>
+                🎯 <strong>יעד:</strong> ${destinations.slice(0, 8).join(', ')} ועוד ${destinations.length - 8}...<br>
+                🌞 <strong>עונה:</strong> קיץ, חורף, אביב, סתיו<br>
+                📅 <strong>חודש:</strong> ינואר-דצמבר<br>
+                💰 <strong>תקציב:</strong> זול, עד 500 דולר<br>
+                🎭 <strong>סוג חופשה:</strong> הרפתקאות, תרבות, יוקרה<br><br>
+                
+                <em>פשוט תכתוב מה אתה מחפש...</em>`);
+            
+            // הפעלת הממשק
+            document.getElementById('messageInput').disabled = false;
+            document.getElementById('sendButton').disabled = false;
+            document.getElementById('messageInput').focus();
+        }
+
+        // פונקציה לחיפוש לפי עונה
+        function searchBySeason(seasonName) {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                
+                const seasonData = seasons[seasonName];
+                if (!seasonData) return;
+                
+                const stats = getSeasonStats(seasonName);
+                if (!stats) {
+                    addMessage(`😞 לא מצאתי טיסות ב${seasonName}`);
+                    return;
+                }
+                
+                // חיפוש טיסות לעונה
+                const seasonFlights = flightData.filter(flight => {
+                    const flightMonth = parseInt(flight.date.split('-')[1]);
+                    return seasonData.months.includes(flightMonth) && flight.from === 'תל אביב';
+                }).sort((a, b) => a.price - b.price).slice(0, 6);
+                
+                let response = `
+                    <div class="season-highlight">
+                        <h4>${seasonData.emoji} טיסות ב${seasonName} ${seasonData.description}</h4>
+                        <p>💰 מחיר ממוצע: ${stats.avgPrice}$ | 🎯 ${stats.destinations} יעדים | ✈️ ${stats.flightCount} טיסות</p>
+                    </div>
+                    
+                    <strong>🏆 הטיסות הטובות ביותר ב${seasonName}:</strong><br><br>
+                `;
+                
+                seasonFlights.forEach((flight, index) => {
+                    const flightSeason = getSeasonFromDate(flight.date);
+                    const monthName = getMonthName(parseInt(flight.date.split('-')[1]));
+                    
+                    response += `
+                        <div class="flight-card">
+                            <div class="season-badge">${seasonData.emoji} ${flightSeason}</div>
+                            <div class="flight-header">
+                                <div class="flight-route">${flight.from} ← ${flight.to}</div>
+                                <div class="flight-price">${flight.price}$</div>
+                            </div>
+                            <div class="flight-details">
+                                📅 ${flight.date} (${monthName}) • ⏰ ${flight.time} • ✈️ ${flight.airline}<br>
+                                ⏱️ ${flight.duration} • 🎭 ${flight.category}
+                            </div>
+                            <div style="text-align: center; margin-top: 10px;">
+                                <span class="suggestion-btn primary" onclick="selectFlightFromSeason(${index}, '${seasonName}')">✈️ בחר טיסה</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                lastSearchResults = seasonFlights;
+                addMessage(response);
+            }, 800);
+        }
+
+        // בחירת טיסה מתוצאות עונה
+        function selectFlightFromSeason(index, seasonName) {
+            if (!lastSearchResults[index]) return;
+            selectedOutboundFlight = lastSearchResults[index];
+            
+            const seasonData = seasons[seasonName];
+            addMessage(`✅ בחרת טיסה ל${selectedOutboundFlight.to} ב${seasonName} ${seasonData.emoji}<br>מחיר: ${selectedOutboundFlight.price}$<br><br>רוצה גם טיסת חזרה?<br><br><div class="suggestions"><span class="suggestion-btn primary" onclick="searchReturnFlights()">✈️ כן, חפש חזרה</span><span class="suggestion-btn" onclick="proceedToBooking()">❌ לא, המשך להזמנה</span></div>`);
+        }
+
+        // פונקציות מודל המידע
+        function openInfoModal() {
+            document.getElementById('infoModal').style.display = 'block';
+        }
+
+        function closeInfoModal() {
+            document.getElementById('infoModal').style.display = 'none';
+        }
+
+        // פונקציות עזר
+        function addMessage(text, isUser = false) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            messageDiv.innerHTML = text;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTyping() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            typingIndicator.style.display = 'flex';
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        }
+
+        function hideTyping() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            typingIndicator.style.display = 'none';
+        }
+
+        // פונקציה לתיקון שגיאות כתיב - משופרת עם חודשים
+        function fixTypos(text) {
+            const typoCorrections = {
+                // יעדים - מורחב
+                'פירז': 'פריז', 'פריס': 'פריז', 'פריץ': 'פריז', 'פרוז': 'פריז', 'פרים': 'פריז',
+                'לונדםן': 'לונדון', 'לןנדון': 'לונדון', 'לונדךן': 'לונדון', 'לונדןן': 'לונדון', 'לםנדון': 'לונדון',
+                'איסטמבול': 'איסטנבול', 'איסטנבךל': 'איסטנבול', 'איסטמבואל': 'איסטנבול', 'איסטנבואל': 'איסטנבול',
+                'ברצלןנה': 'ברצלונה', 'ברצלמנה': 'ברצלונה', 'ברסלונה': 'ברצלונה', 'ברצלונת': 'ברצלונה',
+                'דובםי': 'דובאי', 'דובתי': 'דובאי', 'דובי': 'דובאי', 'דוביי': 'דובאי', 'דובע': 'דובאי', 'דוגאי': 'דובאי',
+                'רםמא': 'רומא', 'רומת': 'רומא', 'רןמא': 'רומא', 'רמא': 'רומא', 'רומע': 'רומא',
+                'ברליו': 'ברלין', 'ברלון': 'ברלין', 'ברליך': 'ברלין',
+                'אמסטרדאם': 'אמסטרדם', 'אמסטרדמ': 'אמסטרדם', 'אמסטרדים': 'אמסטרדם',
+                'פראק': 'פראג', 'פרק': 'פראג', 'פרג': 'פראג',
+                'אתונא': 'אתונה', 'אתונת': 'אתונה', 'אטונה': 'אתונה',
+                'לרנאקה': 'לרנקה', 'לארנקה': 'לרנקה', 'לרנקא': 'לרנקה',
+                'טוקיא': 'טוקיו', 'טקיו': 'טוקיו', 'טוקיא': 'טוקיו',
+                'ניויורק': 'ניו יורק', 'ניו-יורק': 'ניו יורק', 'נ.י': 'ניו יורק',
+                // חודשים ועונות - מורחב
+                'ינואק': 'ינואר', 'יאנואר': 'ינואר', 'ינואו': 'ינואר',
+                'פברו': 'פברואר', 'פבואר': 'פברואר', 'פרואר': 'פברואר',
+                'מרס': 'מרץ', 'מרצ': 'מרץ', 'מארץ': 'מרץ',
+                'אפרל': 'אפריל', 'אפריכ': 'אפריל', 'אפרוי': 'אפריל',
+                'מיי': 'מאי', 'מיו': 'מאי', 'מואי': 'מאי',
+                'יוני': 'יוני', 'יונו': 'יוני', 'יונם': 'יוני',
+                'יולי': 'יולי', 'יולו': 'יולי', 'יוליי': 'יולי',
+                'אוגוש': 'אוגוסט', 'אוגס': 'אוגוסט', 'אוגשט': 'אוגוסט',
+                'ספטמ': 'ספטמבר', 'ספטם': 'ספטמבר', 'ספטמ': 'ספטמבר',
+                'אוקטו': 'אוקטובר', 'אוקט': 'אוקטובר', 'אוקטךבר': 'אוקטובר',
+                'נובמ': 'נובמבר', 'נובם': 'נובמבר', 'נוב': 'נובמבר',
+                'דצמ': 'דצמבר', 'דצם': 'דצמבר', 'דיצמבר': 'דצמבר',
+                'קוץ': 'קיץ', 'קיצ': 'קיץ', 'קייץ': 'קיץ',
+                'אבוב': 'אביב', 'אביכ': 'אביב', 'אביו': 'אביב',
+                'חורפ': 'חורף', 'חורפ': 'חורף', 'חורך': 'חורף',
+                'סתו': 'סתיו', 'סתיב': 'סתיו', 'סתוו': 'סתיו',
+                // מילות מפתח
+                'טושה': 'טיסה', 'טםסה': 'טיסה', 'זךל': 'זול', 'זםל': 'זול', 'חופשת': 'חופשה'
+            };
+            
+            let correctedText = text;
+            let corrections = [];
+            
+            for (const [typo, correction] of Object.entries(typoCorrections)) {
+                if (correctedText.includes(typo)) {
+                    correctedText = correctedText.replace(new RegExp(typo, 'gi'), correction);
+                    corrections.push({ original: typo, corrected: correction });
+                }
+            }
+            
+            return { text: correctedText, corrections: corrections };
+        }
+
+        // פונקציה להצגת תיקונים
+        function showCorrections(corrections) {
+            if (corrections.length === 0) return '';
+            
+            let correctionMessage = '<div class="typo-correction">';
+            correctionMessage += '🔤 <strong>תיקנתי:</strong> ';
+            
+            const correctionsList = corrections.map(c => `"${c.original}" → "${c.corrected}"`).join(', ');
+            correctionMessage += correctionsList;
+            correctionMessage += '</div>';
+            
+            return correctionMessage;
+        }
+
+        // בדיקה אם ההודעה קשורה לטיסות
+        function isFlightRelated(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // מילים שמצביעות על נושאים לא קשורים לטיסות
+            const nonFlightKeywords = [
+                'מסעדה', 'מסעדות', 'אוכל', 'ארוחה', 'מלון', 'מלונות', 'לינה',
+                'מוזיאון', 'אטרקציה', 'קניות', 'מזג אויר', 'מה השעה', 'מטבע', 'ביטוח'
+            ];
+            
+            // אם יש מילה שלא קשורה לטיסות - זה לא טיסה
+            for (const keyword of nonFlightKeywords) {
+                if (lowerMessage.includes(keyword)) {
+                    return false;
+                }
+            }
+            
+            // מילות מפתח של טיסות - מורחב עם יעדים וזמנים
+            const flightKeywords = [
+                'טיסה', 'טיסות', 'כרטיס', 'חזור', 'הלוך', 'נסיעה', 'חופשה',
+                'פריז', 'לונדון', 'איסטנבול', 'ברצלונה', 'דובאי', 'רומא', 'ברלין', 'אמסטרדם', 'פראג', 'אתונה', 'לרנקה', 'טוקיו', 'ניו יורק',
+                'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
+                'קיץ', 'חורף', 'אביב', 'סתיו', 'זול', 'זולה', 'מחיר',
+                'הרפתקאות', 'תרבות', 'יוקרה', 'בטן גב', 'חוף', 'חופים', 'אני רוצה', 'מחפש', 'איפה',
+                'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'
+            ];
+            
+            // אם יש מילת מפתח של טיסות - זה טיסה
+            for (const keyword of flightKeywords) {
+                if (lowerMessage.includes(keyword)) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        // חיפוש טיסות משופר - עם תמיכה מלאה בעונות וחודשים
+        function searchFlights(query) {
+            if (!isDataLoaded || flightData.length === 0) {
+                return { flights: [], corrections: [] };
+            }
+            
+            const typoResult = fixTypos(query);
+            const correctedQuery = typoResult.text;
+            const corrections = typoResult.corrections;
+            const lowerQuery = correctedQuery.toLowerCase();
+            let results = [...flightData];
+
+            // סינון לטיסות יוצאות מתל אביב
+            results = results.filter(flight => flight.from === 'תל אביב');
+
+            // זיהוי קטגוריה
+            let categoryFilter = null;
+            if (lowerQuery.includes('הרפתקה') || lowerQuery.includes('הרפתקאות') || lowerQuery.includes('טבע') || lowerQuery.includes('בטן גב') || lowerQuery.includes('חוף') || lowerQuery.includes('חופים')) {
+                categoryFilter = 'הרפתקאות';
+            } else if (lowerQuery.includes('תרבות') || lowerQuery.includes('תרבותי') || lowerQuery.includes('עיר') || lowerQuery.includes('מוזיאון')) {
+                categoryFilter = 'תרבות';
+            } else if (lowerQuery.includes('יוקרה') || lowerQuery.includes('יוקרתי') || lowerQuery.includes('מפואר') || lowerQuery.includes('עסקים')) {
+                categoryFilter = 'יוקרה';
+            }
+            
+            if (categoryFilter) {
+                results = results.filter(flight => flight.category === categoryFilter);
+                console.log(`סינון לפי קטגוריה: ${categoryFilter}, נמצאו ${results.length} טיסות`);
+            }
+
+            // זיהוי יעד
+            const availableDestinations = [...new Set(flightData.map(f => f.to))];
+            let destinationFound = false;
+            
+            for (const dest of availableDestinations) {
+                if (lowerQuery.includes(dest.toLowerCase()) || 
+                    dest.toLowerCase().includes(lowerQuery.trim().toLowerCase())) {
+                    results = results.filter(flight => flight.to === dest);
+                    destinationFound = true;
+                    console.log(`נמצא יעד: ${dest}, טיסות: ${results.length}`);
+                    break;
+                }
+            }
+
+            // זיהוי תקציב
+            const priceMatches = correctedQuery.match(/(\d+)/g);
+            if (priceMatches) {
+                const maxPrice = parseInt(priceMatches[0]);
+                
+                if (lowerQuery.includes('עד') || 
+                    lowerQuery.includes('מתחת') || 
+                    lowerQuery.includes('פחות') ||
+                    lowerQuery.includes('מקסימום') ||
+                    lowerQuery.includes('לא יותר') ||
+                    lowerQuery.includes('עד ל')) {
+                    
+                    results = results.filter(flight => flight.price <= maxPrice);
+                    console.log(`סינון לפי מחיר עד: ${maxPrice}$, נמצאו ${results.length} טיסות`);
+                }
+            }
+
+            // זיהוי "זול"
+            if (lowerQuery.includes('זול') || lowerQuery.includes('זולה') || lowerQuery.includes('זולות')) {
+                results.sort((a, b) => a.price - b.price);
+                results = results.slice(0, Math.min(results.length, 8));
+            }
+
+            // ** זיהוי עונה ובחודש משופר **
+            let targetMonths = [];
+            let seasonFound = false;
+            
+            // חיפוש לפי עונה קודם
+            for (const [seasonName, seasonData] of Object.entries(seasons)) {
+                if (lowerQuery.includes(seasonName)) {
+                    targetMonths = seasonData.months;
+                    seasonFound = seasonName;
+                    console.log(`נמצאה עונה: ${seasonName}, חודשים: ${targetMonths}`);
+                    break;
+                }
+            }
+            
+            // חיפוש לפי חודש ספציפי
+            if (targetMonths.length === 0) {
+                for (const [monthName, monthNum] of Object.entries(months)) {
+                    if (lowerQuery.includes(monthName)) {
+                        targetMonths.push(monthNum);
+                        console.log(`נמצא חודש: ${monthName} (${monthNum})`);
+                        break;
+                    }
+                }
+            }
+            
+            // החלת סינון לפי זמן
+            if (targetMonths.length > 0) {
+                results = results.filter(flight => {
+                    const flightMonth = parseInt(flight.date.split('-')[1]);
+                    return targetMonths.includes(flightMonth);
+                });
+                console.log(`סינון לפי זמן: חודשים ${targetMonths}, נמצאו ${results.length} טיסות`);
+            }
+
+            // מיון לפי מחיר
+            results.sort((a, b) => a.price - b.price);
+            
+            // אם יש יותר מ-6 תוצאות ולא חיפשו יעד ספציפי - נציג מגוון יעדים
+            if (results.length > 6 && !destinationFound) {
+                const uniqueDestinations = [];
+                const seenDestinations = new Set();
+                
+                for (const flight of results) {
+                    if (!seenDestinations.has(flight.to)) {
+                        uniqueDestinations.push(flight);
+                        seenDestinations.add(flight.to);
+                    } else if (uniqueDestinations.filter(f => f.to === flight.to).length < 2) {
+                        uniqueDestinations.push(flight);
+                    }
+                    
+                    if (uniqueDestinations.length >= 6) break;
+                }
+                
+                return { 
+                    flights: uniqueDestinations, 
+                    corrections: corrections, 
+                    seasonFound: seasonFound,
+                    monthFound: targetMonths.length === 1 ? getMonthName(targetMonths[0]) : null
+                };
+            }
+            
+            return { 
+                flights: results.slice(0, 6), 
+                corrections: corrections,
+                seasonFound: seasonFound,
+                monthFound: targetMonths.length === 1 ? getMonthName(targetMonths[0]) : null
+            };
+        }
+
+        // יצירת תצוגת טיסה משופרת
+        function createFlightDisplay(flight, index, showSelectButton = false, isReturn = false, seasonInfo = null) {
+            const flightSeason = getSeasonFromDate(flight.date);
+            const monthName = getMonthName(parseInt(flight.date.split('-')[1]));
+            const seasonData = seasons[flightSeason];
+            
+            const selectBtn = showSelectButton ? 
+                `<div style="text-align: center; margin-top: 10px;">
+                    <span class="suggestion-btn primary" onclick="${isReturn ? `selectReturnFlight(${index})` : `selectFlight(${index})`}">✈️ בחר טיסה</span>
+                </div>` : '';
+
+            return `
+                <div class="flight-card">
+                    <div class="flight-header">
+                        <div class="flight-route">${flight.from} ← ${flight.to}</div>
+                        <div class="flight-price">${flight.price}$</div>
+                    </div>
+                    <div class="flight-details">
+                        📅 ${flight.date} (${monthName}) • ⏰ ${flight.time} • ✈️ ${flight.airline}<br>
+                        ⏱️ ${flight.duration} • 🎭 ${flight.category} • ${seasonData.emoji} ${flightSeason}
+                    </div>
+                    ${selectBtn}
+                </div>
+            `;
+        }
+
+        // בחירת טיסה
+        function selectFlight(index) {
+            if (!lastSearchResults[index]) return;
+            
+            selectedOutboundFlight = lastSearchResults[index];
+            const flightSeason = getSeasonFromDate(selectedOutboundFlight.date);
+            const seasonData = seasons[flightSeason];
+            
+            addMessage(`✅ בחרת טיסה ל${selectedOutboundFlight.to} ב-${selectedOutboundFlight.price}$<br>תאריך: ${selectedOutboundFlight.date} (${flightSeason} ${seasonData.emoji})<br><br>רוצה גם טיסת חזרה?<br><br><div class="suggestions"><span class="suggestion-btn primary" onclick="searchReturnFlights()">✈️ כן, חפש חזרה</span><span class="suggestion-btn" onclick="proceedToBooking()">❌ לא, המשך להזמנה</span></div>`);
+        }
+
+        // חיפוש טיסות חזרה
+        function searchReturnFlights() {
+            if (!selectedOutboundFlight) return;
+
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                
+                const outboundDate = new Date(selectedOutboundFlight.date);
+                
+                availableReturnFlights = flightData.filter(flight => {
+                    const returnDate = new Date(flight.date);
+                    const daysDifference = (returnDate - outboundDate) / (1000 * 60 * 60 * 24);
+                    
+                    return flight.from === selectedOutboundFlight.to && 
+                           flight.to === selectedOutboundFlight.from &&
+                           daysDifference >= 2 && 
+                           daysDifference <= 14;
+                }).slice(0, 4);
+
+                if (availableReturnFlights.length === 0) {
+                    addMessage('😞 לא מצאתי טיסות חזרה מתאימות בטווח של 2-14 ימים.<br><br><div class="suggestions"><span class="suggestion-btn primary" onclick="proceedToBooking()">📋 המשך עם טיסה אחת</span><span class="suggestion-btn" onclick="startNewSearch()">🔄 בצע חיפוש חדש</span></div>');
+                    return;
+                }
+
+                let response = `🔄 מצאתי ${availableReturnFlights.length} טיסות חזרה:<br><br>`;
+                availableReturnFlights.forEach((flight, index) => {
+                    response += createFlightDisplay(flight, index, true, true, true);
+                });
+
+                addMessage(response);
+            }, 1000);
+        }
+
+        // בחירת טיסת חזרה
+        function selectReturnFlight(index) {
+            if (!availableReturnFlights[index]) return;
+            
+            selectedReturnFlight = availableReturnFlights[index];
+            proceedToBooking();
+        }
+
+        // מעבר להזמנה
+        function proceedToBooking() {
+            const totalPrice = selectedOutboundFlight.price + (selectedReturnFlight ? selectedReturnFlight.price : 0);
+            
+            let bookingSummary = `📋 סיכום הזמנה:<br><br>`;
+            
+            bookingSummary += `<div class="booking-summary">
+                <h3>✈️ הטיסות שלך</h3>
+                
+                <strong>🛫 הלוך:</strong> ${selectedOutboundFlight.to}<br>
+                📅 ${selectedOutboundFlight.date} • ${selectedOutboundFlight.price}$<br>
+            `;
+            
+            if (selectedReturnFlight) {
+                bookingSummary += `
+                <strong>🛬 חזור:</strong> ${selectedReturnFlight.to}<br>
+                📅 ${selectedReturnFlight.date} • ${selectedReturnFlight.price}$<br>
+                `;
+            }
+            
+            bookingSummary += `
+                <div class="total-price">💰 סה"כ: ${totalPrice}$</div>
+            </div>`;
+            
+            bookingSummary += `
+            <strong>📝 מלא פרטים להזמנה:</strong><br><br>
+            
+            <div class="completion-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>שם פרטי:</label>
+                        <input type="text" id="firstName" placeholder="שם פרטי">
+                    </div>
+                    <div class="form-group">
+                        <label>שם משפחה:</label>
+                        <input type="text" id="lastName" placeholder="שם משפחה">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>אימייל:</label>
+                        <input type="email" id="email" placeholder="example@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>טלפון:</label>
+                        <input type="tel" id="phone" placeholder="050-1234567">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>מספר דרכון:</label>
+                        <input type="text" id="passport" placeholder="מספר דרכון">
+                    </div>
+                    <div class="form-group">
+                        <label>תאריך תפוגת דרכון:</label>
+                        <input type="date" id="passportExpiry">
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin: 15px 0;">
+                <span class="suggestion-btn primary" onclick="completeBooking()" style="font-size: 1rem; padding: 12px 25px;">🎉 השלם הזמנה</span>
+                <span class="suggestion-btn" onclick="startNewSearch()">🔄 חיפוש חדש</span>
+            </div>
+            `;
+            
+            addMessage(bookingSummary);
+        }
+
+        // השלמת הזמנה
+        function completeBooking() {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const passport = document.getElementById('passport').value.trim();
+            const passportExpiry = document.getElementById('passportExpiry').value;
+            
+            if (!firstName || !lastName || !email || !phone || !passport || !passportExpiry) {
+                addMessage('❌ אנא מלא את כל השדות הנדרשים');
+                return;
+            }
+            
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                addMessage('❌ פורמט האימייל לא תקין');
+                return;
+            }
+            
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                
+                const totalPrice = selectedOutboundFlight.price + (selectedReturnFlight ? selectedReturnFlight.price : 0);
+                const bookingNumber = 'SKY' + Math.random().toString(36).substr(2, 6).toUpperCase();
+                
+                let confirmationMessage = `🎉 הזמנה הושלמה!<br><br>`;
+                
+                confirmationMessage += `
+                <div class="booking-summary">
+                    <h3>✅ מספר הזמנה: ${bookingNumber}</h3>
+                    
+                    <strong>👤 ${firstName} ${lastName}</strong><br>
+                    📧 ${email} | 📞 ${phone}<br><br>
+                    
+                    <strong>✈️ הטיסות:</strong><br>
+                    🛫 ${selectedOutboundFlight.to} - ${selectedOutboundFlight.date}<br>
+                `;
+                
+                if (selectedReturnFlight) {
+                    confirmationMessage += `🛬 ${selectedReturnFlight.to} - ${selectedReturnFlight.date}<br>`;
+                }
+                
+                confirmationMessage += `
+                    <div class="total-price">💰 סה"כ: ${totalPrice}$</div>
+                </div>
+                
+                <strong>📞 נציג יצור קשר תוך 24 שעות להשלמת התשלום!</strong><br><br>
+                
+                <div style="text-align: center;">
+                    <span class="suggestion-btn primary" onclick="startNewSearch()">🔍 חפש טיסה נוספת</span>
+                </div>
+                `;
+                
+                addMessage(confirmationMessage);
+                resetState();
+            }, 1500);
+        }
+
+        // איפוס מצב
+        function resetState() {
+            currentState = 'searching';
+            selectedOutboundFlight = null;
+            selectedReturnFlight = null;
+            availableReturnFlights = [];
+            lastSearchResults = [];
+        }
+
+        // התחלת חיפוש חדש
+        function startNewSearch() {
+            resetState();
+            
+            const destinations = [...new Set(flightData.map(f => f.to))].sort();
+            
+            addMessage(`🆕 בוא נתחיל חיפוש חדש!<br><br>💡 <strong>אפשר לחפש לפי:</strong><br>🎯 יעד (${destinations.length} זמינים), 🌞 עונה, 📅 חודש, 💰 תקציב, 🎭 סוג חופשה<br><br><em>פשוט תכתוב מה אתה מחפש...</em>`);
+        }
+
+        // עיבוד הודעה משופר
+        function processMessage(message) {
+            if (!message.trim()) return;
+
+            addMessage(message, true);
+
+            // אם הנתונים לא נטענו עדיין
+            if (!isDataLoaded) {
+                addMessage('⏳ אנא המתן, הנתונים עדיין נטענים...');
+                return;
+            }
+
+            showTyping();
+
+            setTimeout(() => {
+                hideTyping();
+                
+                // בדיקה לחיפוש חדש
+                if (message.toLowerCase().includes('עוד טיסה') || 
+                    message.toLowerCase().includes('עוד חיפוש') || 
+                    message.toLowerCase().includes('חיפוש חדש') ||
+                    message.toLowerCase().includes('אני רוצה עוד') ||
+                    message.toLowerCase().includes('רוצה עוד טיסה')) {
+                    startNewSearch();
+                    return;
+                }
+                
+                // בדיקות פשוטות
+                if (message.toLowerCase().includes('שלום') || message.toLowerCase().includes('היי')) {
+                    const destinations = [...new Set(flightData.map(f => f.to))].sort();
+                    
+                    addMessage(`👋 היי!<br><br>💡 <strong>איך לחפש טיסה:</strong><br>🎯 <strong>יעדים זמינים (${destinations.length}):</strong> ${destinations.slice(0, 8).join(', ')} ועוד...<br>🌞 <strong>עונה:</strong> קיץ, חורף, אביב, סתיו<br>📅 <strong>חודש:</strong> ינואר-דצמבר<br>💰 <strong>תקציב:</strong> זול, עד 500 דולר<br>🎭 <strong>סוג חופשה:</strong> הרפתקאות, תרבות, יוקרה<br><br><em>פשוט תכתוב מה אתה מחפש...</em>`);
+                    return;
+                }
+
+                if (!isFlightRelated(message)) {
+                    addMessage('🤖 אני עוזר רק עם טיסות!<br><br>💡 <strong>אפשר לחפש לפי:</strong><br>🎯 יעד (34 יעדים זמינים)<br>🌞 עונה (קיץ, חורף, אביב, סתיו)<br>📅 חודש (ינואר-דצמבר)<br>💰 תקציב (זול, עד 500 דולר...)<br>🎭 סוג חופשה (הרפתקאות, תרבות, יוקרה)<br><br><em>פשוט תכתוב מה אתה מחפש...</em>');
+                    return;
+                }
+
+                const searchResult = searchFlights(message);
+                const results = searchResult.flights;
+                const corrections = searchResult.corrections;
+                const seasonFound = searchResult.seasonFound;
+                const monthFound = searchResult.monthFound;
+                lastSearchResults = results;
+
+                if (results.length === 0) {
+                    let noResultsMessage = '';
+                    if (corrections.length > 0) {
+                        noResultsMessage += showCorrections(corrections) + '<br>';
+                    }
+                    
+                    const destinations = [...new Set(flightData.map(f => f.to))].sort();
+                    noResultsMessage += `😞 לא מצאתי טיסות התואמות לחיפוש.<br><br>💡 <strong>נסה לחפש לפי:</strong><br>🎯 יעד אחר (${destinations.slice(0, 6).join(', ')}...)<br>🌞 עונה אחרת (קיץ, חורף, אביב, סתיו)<br>📅 חודש אחר<br>💰 תקציב גבוה יותר<br>🎭 סוג חופשה (הרפתקאות, תרבות, יוקרה)`;
+                    addMessage(noResultsMessage);
+                    return;
+                }
+
+                let response = '';
+                
+                if (corrections.length > 0) {
+                    response += showCorrections(corrections) + '<br>';
+                }
+                
+                // הוספת מידע על עונה/חודש אם נמצא
+                if (seasonFound) {
+                    const seasonData = seasons[seasonFound];
+                    const stats = getSeasonStats(seasonFound);
+                    response += `
+                        <div class="season-highlight">
+                            <h4>${seasonData.emoji} טיסות ב${seasonFound} ${seasonData.description}</h4>
+                            <p>💰 מחיר ממוצע: ${stats.avgPrice}$ | 🎯 ${stats.destinations} יעדים | ✈️ ${stats.flightCount} טיסות</p>
+                        </div>
+                    `;
+                } else if (monthFound) {
+                    response += `
+                        <div class="season-highlight">
+                            <h4>📅 טיסות ב${monthFound}</h4>
+                            <p>נמצאו ${results.length} טיסות עבור ${monthFound}</p>
+                        </div>
+                    `;
+                }
+                
+                response += `✈️ מצאתי ${results.length} טיסות עבורך!<br><br>`;
+                
+                results.forEach((flight, index) => {
+                    response += createFlightDisplay(flight, index, true, false, seasonFound || monthFound);
+                });
+
+                addMessage(response);
+            }, 800);
+        }
+
+        // פונקציות ממשק
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message && !input.disabled) {
+                processMessage(message);
+                input.value = '';
+            }
+        }
+
+        // אתחול
+        document.addEventListener('DOMContentLoaded', function() {
+            const input = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+            
+            sendButton.addEventListener('click', sendMessage);
+            
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !input.disabled) {
+                    sendMessage();
+                }
+            });
+            
+            // טעינת הדאטאבייס
+            loadFlightDatabase();
+        });
+    </script>
+	<script>
+const apiKey = "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";
+
+async function sendMessageToOpenAI(message) {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: "gpt-4",
+            messages: [
+                { role: "system", content: "אתה עוזר חכם להזמנת טיסות בישראל. ענה בעברית." },
+                { role: "user", content: message }
+            ]
+        })
+    });
+
+    const data = await response.json();
+    const reply = data.choices[0].message.content;
+    addMessageToChat("bot", reply);
+}
+
+function addMessageToChat(sender, text) {
+    const chatMessages = document.getElementById("chatMessages");
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `message ${sender}-message`;
+    messageDiv.textContent = text;
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// דוגמה להפעלה ראשונית (לבדוק תקשורת)
+sendMessageToOpenAI("שלום, אילו טיסות יש מתל אביב לאירופה ביולי?");
+</script>
+
+</body>
+</html>
